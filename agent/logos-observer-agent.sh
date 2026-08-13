@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-AGENT_VERSION="0.1.0"
+AGENT_VERSION="0.1.1"
 CONFIG_FILE="${LOGOS_OBSERVER_CONFIG:-/etc/logos-observer/agent.env}"
 
 if [[ ! -r "$CONFIG_FILE" ]]; then
@@ -72,17 +72,40 @@ bool_json() {
   if "$@"; then printf 'true'; else printf 'false'; fi
 }
 
-STATUS=$(run_logoscore status --json 2>/dev/null || printf '{"daemon":{"status":"unknown"},"modules":[]}')
+json_object_or() {
+  local raw="$1"
+  local fallback="$2"
+  local normalized
+  normalized=$(jq -sc 'map(select(type == "object")) | first // empty' <<<"$raw" 2>/dev/null || true)
+  if [[ -n "$normalized" ]]; then printf '%s' "$normalized"; else printf '%s' "$fallback"; fi
+}
+
+json_array_or_empty() {
+  local raw="$1"
+  local normalized
+  normalized=$(jq -sc 'map(select(type == "array")) | first // empty' <<<"$raw" 2>/dev/null || true)
+  if [[ -n "$normalized" ]]; then printf '%s' "$normalized"; else printf '[]'; fi
+}
+
+unsigned_integer_or_zero() {
+  local value="$1"
+  if [[ "$value" =~ ^[0-9]+$ ]]; then printf '%s' "$value"; else printf '0'; fi
+}
+
+STATUS_RAW=$(run_logoscore status --json 2>/dev/null || true)
+STATUS=$(json_object_or "$STATUS_RAW" '{"daemon":{"status":"unknown"},"modules":[]}')
 CRYPTARCHIA=$(localhost_json "/cryptarchia/info")
 if ! jq -e 'type == "object" and has("mode")' >/dev/null 2>&1 <<<"$CRYPTARCHIA"; then
   CRYPTARCHIA=$(module_call_json "get_cryptarchia_info")
 fi
+CRYPTARCHIA=$(json_object_or "$CRYPTARCHIA" '{}')
 
 NETWORK=$(localhost_json "/network/info")
 if ! jq -e 'type == "object" and has("peer_id")' >/dev/null 2>&1 <<<"$NETWORK"; then
   NETWORK=$(module_call_json "get_network_info")
 fi
-DECLARATIONS=$(localhost_json "/mantle/sdp/declarations")
+NETWORK=$(json_object_or "$NETWORK" '{}')
+DECLARATIONS=$(json_array_or_empty "$(localhost_json "/mantle/sdp/declarations")")
 
 NODE_SERVICE=$(service_state "logos-node.service")
 BOOTSTRAP_SERVICE=$(service_state "logos-node-bootstrap.service")
@@ -106,17 +129,18 @@ if [[ -z "$BLEND_ZK_ID" && -r "$LOGOS_HOME/user_config.yaml" ]]; then
 fi
 
 if [[ -n "$BLEND_ZK_ID" ]] && jq -e 'type == "array"' >/dev/null 2>&1 <<<"$DECLARATIONS"; then
-  BLEND_DECLARED=$(jq -c --arg zk "$BLEND_ZK_ID" 'any(.[]; .zk_id == $zk)' <<<"$DECLARATIONS")
-  BLEND_ACTIVE_EPOCH=$(jq -r --arg zk "$BLEND_ZK_ID" '[.[] | select(.zk_id == $zk) | .active] | first // 0' <<<"$DECLARATIONS")
+  BLEND_DECLARED=$(jq -c --arg zk "$BLEND_ZK_ID" 'any(.[]; .zk_id == $zk)' <<<"$DECLARATIONS" 2>/dev/null || printf 'false')
+  BLEND_ACTIVE_EPOCH=$(jq -r --arg zk "$BLEND_ZK_ID" '[.[] | select(.zk_id == $zk) | .active] | first // 0' <<<"$DECLARATIONS" 2>/dev/null || printf '0')
 fi
 
-UPTIME_SECONDS=$(awk '{print int($1)}' /proc/uptime)
-DISK_USED_PERCENT=$(df -P "$LOGOS_HOME" | awk 'NR==2 {gsub(/%/, "", $5); print $5}')
-MEMORY_USED_PERCENT=$(awk '
+BLEND_ACTIVE_EPOCH=$(unsigned_integer_or_zero "$BLEND_ACTIVE_EPOCH")
+UPTIME_SECONDS=$(unsigned_integer_or_zero "$(awk '{print int($1)}' /proc/uptime 2>/dev/null || true)")
+DISK_USED_PERCENT=$(unsigned_integer_or_zero "$(df -P "$LOGOS_HOME" 2>/dev/null | awk 'NR==2 {gsub(/%/, "", $5); print $5}')")
+MEMORY_USED_PERCENT=$(unsigned_integer_or_zero "$(awk '
   /MemTotal:/ { total=$2 }
   /MemAvailable:/ { available=$2 }
   END { if (total > 0) printf "%d", ((total-available)*100)/total; else print 0 }
-' /proc/meminfo)
+' /proc/meminfo 2>/dev/null || true)")
 
 SNAPSHOT=$(jq -n \
   --argjson status "$STATUS" \

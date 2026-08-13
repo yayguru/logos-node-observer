@@ -76,8 +76,12 @@ cd logos-node-observer
 sudo bash agent/install.sh \
   --api https://YOUR-PROJECT.netlify.app \
   --node-id node_xxxxxxxxxxxx \
-  --token lno_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  --token-stdin
 ```
+
+Paste the one-time write token only when the installer displays the hidden
+`Observer write token:` prompt. This keeps it out of shell history and the
+process command line.
 
 The installer does not restart Logos. It creates:
 
@@ -105,6 +109,26 @@ Snapshot accepted for node_xxxxxxxxxxxx
 
 Open the dashboard URL from any computer. An unlisted node is accessible only to people who know its node ID URL; choose public visibility to include it in the registry.
 
+## Revoke a registration
+
+Stop the timer, load the existing credentials without printing them, and ask the
+API to delete the registry record and stored snapshots:
+
+```bash
+sudo systemctl stop logos-observer.timer
+set -a
+source /etc/logos-observer/agent.env
+set +a
+curl --fail --silent --show-error --request DELETE --config - <<EOF
+header = "Authorization: Bearer $OBSERVER_TOKEN"
+url = "$OBSERVER_API_URL/api/revoke?id=$OBSERVER_NODE_ID"
+EOF
+unset OBSERVER_TOKEN OBSERVER_NODE_ID OBSERVER_API_URL
+```
+
+The response contains `"revoked":true`. Register again in the site when a new
+write token is needed.
+
 ## Remove the agent
 
 This removes only Observer files. It does not touch Logos services, modules or node data.
@@ -122,7 +146,7 @@ sudo systemctl daemon-reload
 
 - Keep `/etc/logos-observer/agent.env` private. Anyone with its token can overwrite that node's snapshots.
 - Keep the Logos API bound to localhost. Observer does not need inbound access to it.
-- Regenerate a node registration if its write token is exposed. Token rotation is planned for the next phase.
+- Revoke and register the node again immediately if its write token is exposed.
 - The dashboard is operational telemetry, not proof that a remote node is honest.
 
 MIT licensed. See [LICENSE](LICENSE).

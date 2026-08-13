@@ -35,3 +35,10 @@ export async function listPublicSummaries() {
   return records.filter(Boolean);
 }
 
+export async function deleteNode(nodeId) {
+  await Promise.all([
+    store().delete(`registry/${nodeId}`),
+    store().delete(`snapshot/${nodeId}`),
+    store().delete(`public/${nodeId}`),
+  ]);
+}

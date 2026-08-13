@@ -214,11 +214,11 @@ elements.registerForm.addEventListener("submit", async (event) => {
       method: "POST",
       body: JSON.stringify({ displayName: form.get("displayName"), visibility: form.get("visibility") }),
     });
-    const installCommand = `sudo bash agent/install.sh --api ${result.ingestUrl.replace(/\/api\/ingest$/, "")} --node-id ${result.nodeId} --token ${result.token}`;
+    const installCommand = `sudo bash agent/install.sh --api ${result.ingestUrl.replace(/\/api\/ingest$/, "")} --node-id ${result.nodeId} --token-stdin`;
     elements.registrationResult.hidden = false;
     elements.registrationResult.innerHTML = `
       <h3>Credentials created</h3>
-      <p>The write token is shown once. Run the installer from a cloned repository on the node, then remove this browser history if the machine is shared.</p>
+      <p>The write token is shown once. Paste it only at the installer's hidden prompt, then close this tab if the machine is shared.</p>
       <div class="secret-grid"><span>Node ID</span><code>${escapeHtml(result.nodeId)}</code><button class="copy-button" data-copy="${escapeHtml(result.nodeId)}">Copy</button></div>
       <div class="secret-grid"><span>Token</span><code>${escapeHtml(result.token)}</code><button class="copy-button" data-copy="${escapeHtml(result.token)}">Copy</button></div>
       <div class="secret-grid"><span>Install</span><code>${escapeHtml(installCommand)}</code><button class="copy-button" data-copy="${escapeHtml(installCommand)}">Copy</button></div>

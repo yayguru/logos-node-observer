@@ -5,7 +5,7 @@ usage() {
   cat <<'EOF'
 Usage:
   sudo bash agent/install.sh --api https://example.netlify.app \
-    --node-id node_xxxxxxxxxxxx --token lno_xxxxxxxxxxxxxxxxx
+    --node-id node_xxxxxxxxxxxx --token-stdin
 EOF
 }
 
@@ -18,6 +18,12 @@ while [[ $# -gt 0 ]]; do
     --api) API_URL="${2:-}"; shift 2 ;;
     --node-id) NODE_ID="${2:-}"; shift 2 ;;
     --token) TOKEN="${2:-}"; shift 2 ;;
+    --token-stdin)
+      [[ -t 0 || -r /dev/tty ]] || { echo "--token-stdin requires an interactive terminal." >&2; exit 2; }
+      read -r -s -p "Observer write token: " TOKEN </dev/tty
+      printf '\n' >/dev/tty
+      shift
+      ;;
     --help|-h) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
   esac
@@ -40,7 +46,7 @@ if [[ ! "$NODE_ID" =~ ^node_[A-Za-z0-9_-]{12}$ ]]; then
 fi
 
 if [[ ! "$TOKEN" =~ ^lno_[A-Za-z0-9_-]{40,50}$ ]]; then
-  echo "--token has an invalid format." >&2
+  echo "Observer token has an invalid format." >&2
   exit 2
 fi
 
@@ -81,4 +87,3 @@ echo "Dashboard node id: $NODE_ID"
 echo "Timer status: $(systemctl is-active logos-observer.timer)"
 echo "Last run:"
 systemctl --no-pager --full status logos-observer.service | sed -n '1,16p'
-

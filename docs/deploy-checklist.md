@@ -48,8 +48,11 @@ cd logos-node-observer
 sudo bash agent/install.sh \
   --api https://YOUR-PROJECT.netlify.app \
   --node-id node_xxxxxxxxxxxx \
-  --token lno_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  --token-stdin
 ```
+
+At the hidden `Observer write token:` prompt, paste the one-time token returned
+by the site and press Enter.
 
 The installer does not stop or restart `logos-node.service`.
 
