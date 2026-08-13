@@ -7,6 +7,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$safeRepoRoot = $repoRoot.Replace("\", "/")
 
 $token = $null
 $githubCli = Get-Command gh -ErrorAction SilentlyContinue
@@ -99,15 +100,15 @@ try {
 }
 
 $remoteUrl = "https://github.com/$Owner/$Repository.git"
-$remotes = @(& git -C $repoRoot remote)
+$remotes = @(& git -c "safe.directory=$safeRepoRoot" -C $repoRoot remote)
 if ($LASTEXITCODE -ne 0) {
     throw "Unable to read Git remotes."
 }
 
 if ($remotes -contains "origin") {
-    & git -C $repoRoot remote set-url origin $remoteUrl
+    & git -c "safe.directory=$safeRepoRoot" -C $repoRoot remote set-url origin $remoteUrl
 } else {
-    & git -C $repoRoot remote add origin $remoteUrl
+    & git -c "safe.directory=$safeRepoRoot" -C $repoRoot remote add origin $remoteUrl
 }
 
 if ($LASTEXITCODE -ne 0) {
@@ -132,7 +133,7 @@ try {
     $oldErrorActionPreference = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
     try {
-        & git -C $repoRoot push -u origin main
+        & git -c "safe.directory=$safeRepoRoot" -C $repoRoot push -u origin main
         $pushExitCode = $LASTEXITCODE
     } finally {
         $ErrorActionPreference = $oldErrorActionPreference
