@@ -8,31 +8,47 @@ param(
 $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 
-if (-not $TokenFile) {
-    $TokenFile = Join-Path (Split-Path $repoRoot -Parent) "Foryouenv.txt"
-}
+$token = $null
+$githubCli = Get-Command gh -ErrorAction SilentlyContinue
 
-if (-not (Test-Path -LiteralPath $TokenFile)) {
-    throw "Token file not found: $TokenFile"
-}
-
-$tokenLines = Get-Content -LiteralPath $TokenFile
-$token = $tokenLines |
-    Where-Object { $_.Trim() -match "^(github_pat_|ghp_)" } |
-    Select-Object -First 1
-
-if (-not $token) {
-    $tokenEntry = $tokenLines |
-        Where-Object { $_ -match "^\s*GitHubToken\s*[:=]" } |
-        Select-Object -First 1
-
-    if ($tokenEntry) {
-        $token = ($tokenEntry -replace "^\s*GitHubToken\s*[:=]\s*", "").Trim()
+if ($githubCli) {
+    $oldErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & gh auth status --hostname github.com *> $null
+        if ($LASTEXITCODE -eq 0) {
+            $token = & gh auth token --hostname github.com 2> $null
+        }
+    } finally {
+        $ErrorActionPreference = $oldErrorActionPreference
     }
 }
 
 if (-not $token) {
-    throw "No GitHub PAT was found in $TokenFile"
+    if (-not $TokenFile) {
+        $TokenFile = Join-Path (Split-Path $repoRoot -Parent) "Foryouenv.txt"
+    }
+
+    if (Test-Path -LiteralPath $TokenFile) {
+        $tokenLines = Get-Content -LiteralPath $TokenFile
+        $token = $tokenLines |
+            Where-Object { $_.Trim() -match "^(github_pat_|ghp_)" } |
+            Select-Object -First 1
+
+        if (-not $token) {
+            $tokenEntry = $tokenLines |
+                Where-Object { $_ -match "^\s*GitHubToken\s*[:=]" } |
+                Select-Object -First 1
+
+            if ($tokenEntry) {
+                $token = ($tokenEntry -replace "^\s*GitHubToken\s*[:=]\s*", "").Trim()
+            }
+        }
+    }
+}
+
+if (-not $token) {
+    throw "No valid GitHub login was found. Run: gh auth login -h github.com -p https -w"
 }
 
 $token = $token.Trim()
@@ -53,6 +69,10 @@ try {
     $statusCode = $null
     if ($_.Exception.Response) {
         $statusCode = [int]$_.Exception.Response.StatusCode
+    }
+
+    if ($statusCode -eq 401) {
+        throw "GitHub rejected the saved credentials. Run: gh auth login -h github.com -p https -w"
     }
 
     if ($statusCode -ne 404) {

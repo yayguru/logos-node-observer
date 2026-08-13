@@ -41,14 +41,16 @@ npm run preview
 
 ## Publish to GitHub
 
-On Windows, keep the GitHub PAT in the sibling `Foryouenv.txt` file, then run:
+On Windows, authenticate GitHub CLI once, then run the publisher:
 
 ```powershell
+gh auth login -h github.com -p https -w
 powershell -ExecutionPolicy Bypass -File .\scripts\publish-github.ps1
 ```
 
 The publisher creates `yayguru/logos-node-observer` when needed and pushes
-`main` without storing the PAT in the repository or Git remote URL.
+`main` without storing a token in the repository or Git remote URL. A PAT in
+the sibling `Foryouenv.txt` file is supported only as a fallback.
 
 ## Deploy to Netlify
 
