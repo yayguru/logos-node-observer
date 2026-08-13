@@ -39,6 +39,17 @@ npm run preview
 
 `npm run preview` starts a dependency-free visual fixture at `http://127.0.0.1:4173`. For a complete local Netlify runtime, install the Netlify CLI separately and run `netlify dev`; live registration and ingest require Netlify Functions and Blobs.
 
+## Publish to GitHub
+
+On Windows, keep the GitHub PAT in the sibling `Foryouenv.txt` file, then run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\publish-github.ps1
+```
+
+The publisher creates `yayguru/logos-node-observer` when needed and pushes
+`main` without storing the PAT in the repository or Git remote URL.
+
 ## Deploy to Netlify
 
 1. Create a new empty GitHub repository named `logos-node-observer`.
