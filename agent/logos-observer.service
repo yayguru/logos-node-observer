@@ -1,0 +1,19 @@
+[Unit]
+Description=Logos Node Observer snapshot collector
+After=network-online.target logos-node.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/logos-observer-agent
+User=root
+Group=root
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true

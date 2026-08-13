@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#171a1f">
+    <meta name="description" content="Read-only public health dashboard for Logos nodes.">
+    <title>Logos Node Observer</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+
+    <header class="topbar">
+      <a class="brand" href="#/" aria-label="Logos Node Observer home">
+        <span class="brand-mark" aria-hidden="true">L//</span>
+        <span>
+          <strong>NODE OBSERVER</strong>
+          <small>READ-ONLY NETWORK CONSOLE</small>
+        </span>
+      </a>
+
+      <div class="network-state" aria-label="Observer state">
+        <span class="state-pip" aria-hidden="true"></span>
+        PUBLIC GATEWAY
+      </div>
+    </header>
+
+    <main id="content">
+      <section id="home-view" class="view shell-grid" aria-labelledby="home-title">
+        <aside class="intro-panel">
+          <p class="eyebrow">LOGOS OPERATIONS / 01</p>
+          <h1 id="home-title">Inspect a node.<br>Expose nothing.</h1>
+          <p class="intro-copy">
+            A quiet, public health surface for operator-owned Logos nodes. The agent sends
+            a narrow snapshot outward. Wallet keys, config files and the local API stay on the host.
+          </p>
+
+          <dl class="trust-list">
+            <div><dt>INGRESS</dt><dd>Outbound HTTPS only</dd></div>
+            <div><dt>ACCESS</dt><dd>Read-only collection</dd></div>
+            <div><dt>DEFAULT</dt><dd>Unlisted dashboard</dd></div>
+          </dl>
+        </aside>
+
+        <div class="home-workspace">
+          <section class="lookup-block" aria-labelledby="lookup-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">DIRECT LOOKUP</p>
+                <h2 id="lookup-title">Open node console</h2>
+              </div>
+              <span class="index-label">A1</span>
+            </div>
+
+            <form id="lookup-form" class="lookup-form">
+              <label for="node-id">Node ID</label>
+              <div class="field-line">
+                <input id="node-id" name="nodeId" autocomplete="off" spellcheck="false"
+                  placeholder="node_xxxxxxxxxxxx" required>
+                <button type="submit" class="button button-primary">Inspect</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="registry-block" aria-labelledby="registry-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">PUBLIC REGISTRY</p>
+                <h2 id="registry-title">Reporting nodes</h2>
+              </div>
+              <button id="refresh-list" class="text-button" type="button">Refresh</button>
+            </div>
+            <div id="public-nodes" class="node-list" aria-live="polite">
+              <div class="empty-row">Loading registry...</div>
+            </div>
+          </section>
+
+          <section class="register-block" aria-labelledby="register-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">CONNECT YOUR HOST</p>
+                <h2 id="register-title">Register a node</h2>
+              </div>
+              <span class="index-label">A2</span>
+            </div>
+
+            <form id="register-form" class="register-form">
+              <label>
+                <span>Display name</span>
+                <input name="displayName" maxlength="48" placeholder="Warsaw relay 01" required>
+              </label>
+              <label>
+                <span>Visibility</span>
+                <select name="visibility">
+                  <option value="unlisted">Unlisted link</option>
+                  <option value="public">Public registry</option>
+                </select>
+              </label>
+              <button class="button button-secondary" type="submit">Create credentials</button>
+            </form>
+
+            <div id="registration-result" class="registration-result" hidden></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="node-view" class="view node-shell" hidden aria-labelledby="node-title">
+        <aside class="node-rail">
+          <a href="#/" class="back-link">&larr; Registry</a>
+          <div class="rail-node">
+            <span class="eyebrow">ACTIVE CONSOLE</span>
+            <strong id="rail-node-name">Loading...</strong>
+            <code id="rail-node-id"></code>
+          </div>
+          <nav aria-label="Node sections">
+            <button type="button" data-scroll="overview" class="rail-link active">Overview</button>
+            <button type="button" data-scroll="runtime" class="rail-link">Runtime</button>
+            <button type="button" data-scroll="network" class="rail-link">Network</button>
+            <button type="button" data-scroll="host" class="rail-link">Host</button>
+          </nav>
+        </aside>
+
+        <div class="node-workspace">
+          <header class="node-header">
+            <div>
+              <p class="eyebrow">NODE HEALTH / LIVE SNAPSHOT</p>
+              <h1 id="node-title">Loading node</h1>
+              <p id="node-id-label" class="mono-line"></p>
+            </div>
+            <div class="node-actions">
+              <span id="health-chip" class="health-chip pending">Waiting</span>
+              <button id="refresh-node" class="button button-secondary" type="button">Refresh</button>
+            </div>
+          </header>
+
+          <p id="health-sentence" class="health-sentence">Retrieving the latest snapshot.</p>
+
+          <section id="overview" class="metric-grid" aria-label="Node overview metrics">
+            <article class="metric"><span>Mode</span><strong id="metric-mode">--</strong></article>
+            <article class="metric"><span>Height</span><strong id="metric-height">--</strong></article>
+            <article class="metric"><span>Peers</span><strong id="metric-peers">--</strong></article>
+            <article class="metric"><span>Disk</span><strong id="metric-disk">--</strong></article>
+            <article class="metric"><span>Modules</span><strong id="metric-modules">--</strong></article>
+            <article class="metric"><span>Last seen</span><strong id="metric-seen">--</strong></article>
+          </section>
+
+          <div class="detail-grid">
+            <section id="runtime" class="data-panel" aria-labelledby="runtime-title">
+              <div class="panel-title"><h2 id="runtime-title">Runtime</h2><span>R1</span></div>
+              <dl id="runtime-data" class="data-list"></dl>
+            </section>
+
+            <section id="network" class="data-panel" aria-labelledby="network-title">
+              <div class="panel-title"><h2 id="network-title">Network</h2><span>N1</span></div>
+              <dl id="network-data" class="data-list"></dl>
+            </section>
+
+            <section class="data-panel wide" aria-labelledby="modules-title">
+              <div class="panel-title"><h2 id="modules-title">Modules</h2><span>M1</span></div>
+              <div id="modules-data" class="module-table"></div>
+            </section>
+
+            <section id="host" class="data-panel wide" aria-labelledby="host-title">
+              <div class="panel-title"><h2 id="host-title">Host listeners</h2><span>H1</span></div>
+              <div id="listeners-data" class="listener-grid"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>LOGOS NODE OBSERVER / OSS</span>
+      <span>NO REMOTE MUTATION</span>
+    </footer>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+</html>
