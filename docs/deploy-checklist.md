@@ -52,7 +52,8 @@ sudo bash agent/install.sh \
 ```
 
 At the hidden `Observer write token:` prompt, paste the one-time token returned
-by the site and press Enter.
+by the site and press Enter. Do not add the token to the command; visible
+`--token` arguments are rejected.
 
 The installer does not stop or restart `logos-node.service`.
 

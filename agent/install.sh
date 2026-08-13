@@ -17,7 +17,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --api) API_URL="${2:-}"; shift 2 ;;
     --node-id) NODE_ID="${2:-}"; shift 2 ;;
-    --token) TOKEN="${2:-}"; shift 2 ;;
+    --token)
+      echo "--token is disabled because it exposes credentials in shell history. Use --token-stdin." >&2
+      exit 2
+      ;;
     --token-stdin)
       [[ -t 0 || -r /dev/tty ]] || { echo "--token-stdin requires an interactive terminal." >&2; exit 2; }
       read -r -s -p "Observer write token: " TOKEN </dev/tty

@@ -81,7 +81,7 @@ sudo bash agent/install.sh \
 
 Paste the one-time write token only when the installer displays the hidden
 `Observer write token:` prompt. This keeps it out of shell history and the
-process command line.
+process command line. The installer rejects visible `--token` arguments.
 
 The installer does not restart Logos. It creates:
 
